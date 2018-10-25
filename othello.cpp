@@ -52,7 +52,7 @@ void playerMove(Piece board[8][8], char &player);
 
 bool checkLegalMove(const Piece board[8][8], const Move move);
 
-/* Returns 'W' for 'B', and vice versa. */
+/* Returns 'O' for '#', and vice versa. */
 char opponent(char player);
 
 /* Detection for an unbroken line of opponent pieces, 
@@ -70,11 +70,13 @@ void transformBoard(Piece board[8][8], Move move);
 /* Flip a single line of opponent's pieces in direction 'dir'  after a legal move. */
 bool transformLine(Piece piece, int dir, char player, Piece board[8][8]);
 
+char checkWinner(const Piece board[8][8], char player);
+
 
 int main()
 {
     Piece board[8][8];
-    char player = 'W';
+    char player = 'O';
     Piece null; /* The 'null' piece neighbours edge pieces which would otherwise have 
 		   out-of-bounds neighbours. */
     null.placePiece(' ');
@@ -82,10 +84,12 @@ int main()
     setBoard(board, null);
 
     printBoard(board);
-    while (1) {
+    while (!checkWinner(board, player)) {
 	playerMove(board, player);
 	printBoard(board);
     }
+
+    cout << "The winner is " << checkWinner(board, player) << ".\n";
     
     return 0;
 }
@@ -246,10 +250,10 @@ bool checkLegalMove(const Piece board[8][8], const Move move)
 
 char opponent(char player)
 {
-    if (player == 'W')
-	return 'B';
-    else if (player == 'B')
-	return 'W';
+    if (player == 'O')
+	return '#';
+    else if (player == '#')
+	return 'O';
 }
 
 
@@ -273,10 +277,10 @@ bool checkLine(Piece piece, int dir, char player)
 
 void swapPlayer(char &player)
 {
-    if (player == 'W')
-	player = 'B';
-    else if (player == 'B')
-	player = 'W';
+    if (player == 'O')
+	player = '#';
+    else if (player == '#')
+	player = 'O';
 }
 
 
@@ -291,10 +295,10 @@ void setBoard(Piece board[8][8], Piece null)
     }
     /* Initialises the board state to empty and sets each piece's neighbours and coordinates. */
     
-    board[3][3].placePiece('W');
-    board[3][4].placePiece('B');
-    board[4][3].placePiece('B');
-    board[4][4].placePiece('W');
+    board[3][3].placePiece('O');
+    board[3][4].placePiece('#');
+    board[4][3].placePiece('#');
+    board[4][4].placePiece('O');
     /* Places the beginning four pieces on the board. */
 }
 
@@ -330,4 +334,36 @@ bool transformLine(Piece piece, int dir, char player, Piece board[8][8])
     /* Only terminates true if a friendly piece is detected at the end of the line. */
 
     return 0;
+}
+
+
+char checkWinner(const Piece board[8][8], char player)
+{
+    Move move;
+    move.setPlayer(player);
+    int counterW = 0, counterB = 0;
+
+    for (int rows=0; rows<7; rows++) {
+	for (int cols=0; cols<7; cols++) {	    
+	    move.setLocation(rows, cols);
+	    if (checkLegalMove(board, move))
+		return 0;
+	}
+    }
+
+    for (int rows=0; rows<7; rows++) {
+	for (int cols=0; cols<7; cols++) {
+	    if (board[rows][cols].colour() == 'O')
+		counterW ++;
+	    else if (board[rows][cols].colour() == '#')
+		counterB ++;
+	}
+    }
+
+    if (counterW > counterB)
+	return 'O';
+    else if (counterB > counterW)
+	return '#';
+    else
+	return 'D';
 }
