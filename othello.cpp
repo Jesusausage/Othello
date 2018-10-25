@@ -52,7 +52,7 @@ void playerMove(Piece board[8][8], char &player);
 
 bool checkLegalMove(const Piece board[8][8], const Move move);
 
-/* Returns 'O' for '#', and vice versa. */
+/* Returns 'O' for 'X', and vice versa. */
 char opponent(char player);
 
 /* Detection for an unbroken line of opponent pieces, 
@@ -251,8 +251,8 @@ bool checkLegalMove(const Piece board[8][8], const Move move)
 char opponent(char player)
 {
     if (player == 'O')
-	return '#';
-    else if (player == '#')
+	return 'X';
+    else if (player == 'X')
 	return 'O';
 
     return ' ';
@@ -280,8 +280,8 @@ bool checkLine(Piece piece, int dir, char player)
 void swapPlayer(char &player)
 {
     if (player == 'O')
-	player = '#';
-    else if (player == '#')
+	player = 'X';
+    else if (player == 'X')
 	player = 'O';
 }
 
@@ -298,8 +298,8 @@ void setBoard(Piece board[8][8], Piece null)
     /* Initialises the board state to empty and sets each piece's neighbours and coordinates. */
     
     board[3][3].placePiece('O');
-    board[3][4].placePiece('#');
-    board[4][3].placePiece('#');
+    board[3][4].placePiece('X');
+    board[4][3].placePiece('X');
     board[4][4].placePiece('O');
     /* Places the beginning four pieces on the board. */
 }
@@ -345,8 +345,8 @@ char checkWinner(const Piece board[8][8], char player)
     move.setPlayer(player);
     int counterW = 0, counterB = 0;
 
-    for (int rows=0; rows<7; rows++) {
-	for (int cols=0; cols<7; cols++) {	    
+    for (int rows=0; rows<8; rows++) {
+	for (int cols=0; cols<8; cols++) {	    
 	    move.setLocation(rows, cols);
 	    if (checkLegalMove(board, move))
 		return 0;
@@ -354,11 +354,11 @@ char checkWinner(const Piece board[8][8], char player)
     }
     /* If a legal move is detected anywhere on the board, return false. */
 
-    for (int rows=0; rows<7; rows++) {
-	for (int cols=0; cols<7; cols++) {
+    for (int rows=0; rows<8; rows++) {
+	for (int cols=0; cols<8; cols++) {
 	    if (board[rows][cols].colour() == 'O')
 		counterW ++;
-	    else if (board[rows][cols].colour() == '#')
+	    else if (board[rows][cols].colour() == 'X')
 		counterB ++;
 	}
     }
@@ -367,7 +367,7 @@ char checkWinner(const Piece board[8][8], char player)
     if (counterW > counterB)
 	return 'O';
     else if (counterB > counterW)
-	return '#';
+	return 'X';
     else
 	return 'D';
     /* Return the player with more pieces in the end. */
