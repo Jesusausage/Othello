@@ -254,6 +254,8 @@ char opponent(char player)
 	return '#';
     else if (player == '#')
 	return 'O';
+
+    return ' ';
 }
 
 
@@ -350,6 +352,7 @@ char checkWinner(const Piece board[8][8], char player)
 		return 0;
 	}
     }
+    /* If a legal move is detected anywhere on the board, return false. */
 
     for (int rows=0; rows<7; rows++) {
 	for (int cols=0; cols<7; cols++) {
@@ -359,6 +362,7 @@ char checkWinner(const Piece board[8][8], char player)
 		counterB ++;
 	}
     }
+    /* Count the number of pieces for each player. */
 
     if (counterW > counterB)
 	return 'O';
@@ -366,4 +370,5 @@ char checkWinner(const Piece board[8][8], char player)
 	return '#';
     else
 	return 'D';
+    /* Return the player with more pieces in the end. */
 }
