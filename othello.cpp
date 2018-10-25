@@ -72,6 +72,17 @@ bool transformLine(Piece piece, int dir, char player, Piece board[8][8]);
 
 char checkWinner(const Piece board[8][8], char player);
 
+/* Count piece differential. */
+int countDiff(const Piece board[8][8], char player);
+
+void setBoardState(Piece copy[8][8], Piece paste[8][8]);
+
+Move minimax(Piece board[8][8], char player, int &call_counter);
+
+void cpuMove(Piece board[8][8], char &player);
+
+int calculateScore(const Piece board[8][8], char player);
+
 
 int main()
 {
@@ -85,7 +96,11 @@ int main()
 
     printBoard(board);
     while (!checkWinner(board, player)) {
-	playerMove(board, player);
+	if (player == 'O')
+	    playerMove(board, player);
+	else
+	    cpuMove(board, player);
+	
 	printBoard(board);
     }
 
@@ -208,7 +223,7 @@ void playerMove(Piece board[8][8], char &player)
     Move move;
 
     move.setPlayer(player);
-    cout << player << "'s move. Your turn.\n";
+    cout << player << "'s turn to move (player).\n";		    
     cout << "Enter coordinates to make a move: ";
     cin >> tile;
     move.setLocation(tile[0]-'A', tile[1]-'1');
@@ -223,6 +238,23 @@ void playerMove(Piece board[8][8], char &player)
     transformBoard(board, move);    
     swapPlayer(player);
     /* Places the required pieces on the board, then swaps player. */
+}
+
+
+void cpuMove(Piece board[8][8], char &player)
+{
+    cout << player << "'s turn to move (CPU).\n";
+    cout << "Calculating move...\n\n";
+    
+    int counter = 0;
+    Move move = minimax(board, player, counter);
+    move.setPlayer(player);
+    char bestrow = move.row()+'A';
+    char bestcol = move.col()+'1';
+    cout << "CPU chooses " << bestrow << bestcol << ".\n";
+    
+    transformBoard(board, move);
+    swapPlayer(player);
 }
    
 
@@ -343,7 +375,6 @@ char checkWinner(const Piece board[8][8], char player)
 {
     Move move;
     move.setPlayer(player);
-    int counterW = 0, counterB = 0;
 
     for (int rows=0; rows<8; rows++) {
 	for (int cols=0; cols<8; cols++) {	    
@@ -354,21 +385,125 @@ char checkWinner(const Piece board[8][8], char player)
     }
     /* If a legal move is detected anywhere on the board, return false. */
 
-    for (int rows=0; rows<8; rows++) {
-	for (int cols=0; cols<8; cols++) {
-	    if (board[rows][cols].colour() == 'O')
-		counterW ++;
-	    else if (board[rows][cols].colour() == 'X')
-		counterB ++;
-	}
-    }
-    /* Count the number of pieces for each player. */
-
-    if (counterW > counterB)
-	return 'O';
-    else if (counterB > counterW)
-	return 'X';
+    int counter = countDiff(board, player);
+    if (counter > 0)
+	return player;
+    else if (counter < 0)
+	return opponent(player);
     else
 	return 'D';
     /* Return the player with more pieces in the end. */
+}
+
+
+int countDiff(const Piece board[8][8], char player)
+{
+    int counter=0;
+    
+    for (int rows=0; rows<8; rows++) {
+	for (int cols=0; cols<8; cols++) {
+	    if (board[rows][cols].colour() == player)
+		counter++;
+	    else if (board[rows][cols].colour() == opponent(player))
+		counter--;
+	}
+    }
+    /* Counts piece difference between the player and the opponent (positive is better). */
+
+    return counter;
+}
+
+
+void setBoardState(Piece copy[8][8], Piece paste[8][8])
+{
+    for (int rows=0; rows<8; rows++) {
+	for (int cols=0; cols<8; cols++) {
+	    paste[rows][cols] = copy[rows][cols];
+	}
+    }
+}
+
+
+Move minimax(Piece board[8][8], char player, int &call_counter)
+{
+    Move best_move, move;
+    best_move.setScore(-99);
+    Piece state[8][8];
+    setBoardState(board, state);
+
+    if (call_counter == 6) {
+
+	for (int rows=0; rows<8; rows++) {
+	    for (int cols=0; cols<8; cols++) {
+		move.setLocation(rows, cols);
+		move.setPlayer(player);
+		if (checkLegalMove(board, move)) {
+
+		    transformBoard(board, move);
+		    
+		    int score = calculateScore(board, player);
+		    if (score > best_move.score()) {
+			best_move.setLocation(rows, cols);
+			best_move.setScore(score);
+		    }
+		    
+		    setBoardState(state, board);
+		}
+	    }
+	}
+
+	return best_move;
+    }
+    
+    for (int rows=0; rows<8; rows++) {
+	for (int cols=0; cols<8; cols++) {
+	    move.setLocation(rows, cols);
+	    move.setPlayer(player);
+	    if (checkLegalMove(board, move)) {
+
+		transformBoard(board, move);
+		swapPlayer(player);
+		call_counter++;
+		
+		Move best_resp = minimax(board, player, call_counter);
+		
+		int score = -1 * best_resp.score();
+		if (score > best_move.score()) {
+		    best_move.setLocation(rows, cols);
+		    best_move.setScore(score);
+		}
+		
+		setBoardState(state, board);
+		swapPlayer(player);
+		call_counter--;
+		
+	    }
+	}
+    }
+
+    return best_move;
+}
+
+
+int calculateScore(const Piece board[8][8], char player)
+{
+    int counter=0;
+    
+    for (int rows=0; rows<8; rows++) {
+	for (int cols=0; cols<8; cols++) {
+	    if (board[rows][cols].colour() == player)
+		counter++;
+	}
+    }
+
+    if (board[0][0].colour() == player)
+	counter += 24;
+    if (board[7][7].colour() == player)
+	counter += 24;
+    if (board[0][7].colour() == player)
+	counter += 24;
+    if (board[7][0].colour() == player)
+	counter += 24;
+    
+    return counter;
 }
