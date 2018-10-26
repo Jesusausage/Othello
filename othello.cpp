@@ -27,12 +27,12 @@ private:
 
 class Move {
 public:
-    void setScore(float score);
+    void setScore(int score);
     void setPlayer(char colour);
     void setLocation(int row, int col);
     /* Set a move's score, player and coordinates. */
     
-    float score() const;
+    int score() const;
     char player() const;
     int row() const;
     int col() const;
@@ -41,7 +41,7 @@ public:
 private:
     int row_, col_;
     char player_;
-    float score_; /* higher means better chance of winning */
+    int score_; /* higher means better chance of winning */
 };
     
 
@@ -77,7 +77,7 @@ int countDiff(const Piece board[8][8], char player);
 
 void setBoardState(Piece copy[8][8], Piece paste[8][8]);
 
-Move minimax(Piece board[8][8], char player, int &call_counter);
+Move minimax(Piece board[8][8], char player, int depth);
 
 void cpuMove(Piece board[8][8], char &player);
 
@@ -166,7 +166,7 @@ int Piece::col() const {
     return col_; }
 
 
-void Move::setScore(float score) {
+void Move::setScore(int score) {
     score_ = score; }
 
 void Move::setLocation(int row, int col) {
@@ -175,7 +175,7 @@ void Move::setLocation(int row, int col) {
 void Move::setPlayer(char colour) {
     player_ = colour; }
 
-float Move::score() const {
+int Move::score() const {
     return score_; }
 
 int Move::row() const {
@@ -246,8 +246,8 @@ void cpuMove(Piece board[8][8], char &player)
     cout << player << "'s turn to move (CPU).\n";
     cout << "Calculating move...\n\n";
     
-    int counter = 0;
-    Move move = minimax(board, player, counter);
+    int depth = 7;
+    Move move = minimax(board, player, depth);
     move.setPlayer(player);
     char bestrow = move.row()+'A';
     char bestcol = move.col()+'1';
@@ -424,34 +424,15 @@ void setBoardState(Piece copy[8][8], Piece paste[8][8])
 }
 
 
-Move minimax(Piece board[8][8], char player, int &call_counter)
+Move minimax(Piece board[8][8], char player, int depth)
 {
     Move best_move, move;
     best_move.setScore(-999);
     Piece state[8][8];
     setBoardState(board, state);
 
-    if (call_counter == 6) {
-
-	for (int rows=0; rows<8; rows++) {
-	    for (int cols=0; cols<8; cols++) {
-		move.setLocation(rows, cols);
-		move.setPlayer(player);
-		if (checkLegalMove(board, move)) {
-
-		    transformBoard(board, move);
-		    
-		    int score = calculateScore(board, player);
-		    if (score > best_move.score()) {
-			best_move.setLocation(rows, cols);
-			best_move.setScore(score);
-		    }
-		    
-		    setBoardState(state, board);
-		}
-	    }
-	}
-
+    if (depth  == 0) {
+	best_move.setScore(calculateScore(board, player));
 	return best_move;
     }
     
@@ -461,21 +442,15 @@ Move minimax(Piece board[8][8], char player, int &call_counter)
 	    move.setPlayer(player);
 	    if (checkLegalMove(board, move)) {
 
-		transformBoard(board, move);
-		swapPlayer(player);
-		call_counter++;
-		
-		Move best_resp = minimax(board, player, call_counter);
+		transformBoard(board, move);		
+		Move best_resp = minimax(board, opponent(player), depth-1);
 		
 		int score = -1 * best_resp.score();
 		if (score > best_move.score()) {
 		    best_move.setLocation(rows, cols);
 		    best_move.setScore(score);
-		}
-		
+		}		
 		setBoardState(state, board);
-		swapPlayer(player);
-		call_counter--;
 		
 	    }
 	}
