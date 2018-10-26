@@ -427,7 +427,7 @@ void setBoardState(Piece copy[8][8], Piece paste[8][8])
 Move minimax(Piece board[8][8], char player, int &call_counter)
 {
     Move best_move, move;
-    best_move.setScore(-99);
+    best_move.setScore(-999);
     Piece state[8][8];
     setBoardState(board, state);
 
@@ -489,21 +489,32 @@ int calculateScore(const Piece board[8][8], char player)
 {
     int counter=0;
     
-    for (int rows=0; rows<8; rows++) {
-	for (int cols=0; cols<8; cols++) {
+    for (int rows=1; rows<7; rows++) {
+	for (int cols=1; cols<7; cols++) {
 	    if (board[rows][cols].colour() == player)
 		counter++;
 	}
     }
 
     if (board[0][0].colour() == player)
-	counter += 24;
+	counter += 50;
     if (board[7][7].colour() == player)
-	counter += 24;
+	counter += 50;
     if (board[0][7].colour() == player)
-	counter += 24;
+	counter += 50;
     if (board[7][0].colour() == player)
-	counter += 24;
+	counter += 50;
+
+    for (int i=1; i<7; i++) {
+	if (board[0][i].colour() == player)
+	    counter += 7;
+	if (board[7][i].colour() == player)
+	    counter += 7;
+	if (board[i][0].colour() == player)
+	    counter += 7;
+	if (board[i][7].colour() == player)
+	    counter += 7;
+    }
     
     return counter;
 }
