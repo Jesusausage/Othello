@@ -31,6 +31,7 @@ public:
     void setPlayer(char colour);
     void setLocation(int row, int col);
     /* Set a move's score, player and coordinates. */
+    void setVar(int score, char player, int row, int col);
     
     int score() const;
     char player() const;
@@ -77,7 +78,8 @@ int countDiff(const Piece board[8][8], char player);
 
 void setBoardState(Piece copy[8][8], Piece paste[8][8]);
 
-Move minimax(Piece board[8][8], char player, int depth);
+Move minimax(Piece board[8][8], char player, int depth,
+	     bool maximise, int inf, int sup, bool &cut);
 
 void cpuMove(Piece board[8][8], char &player);
 
@@ -175,6 +177,9 @@ void Move::setLocation(int row, int col) {
 void Move::setPlayer(char colour) {
     player_ = colour; }
 
+void Move::setVar(int score, char player, int row, int col) {
+    score_ = score; player_ = player; row_ = row; col_ = col; }
+
 int Move::score() const {
     return score_; }
 
@@ -245,9 +250,10 @@ void cpuMove(Piece board[8][8], char &player)
 {
     cout << player << "'s turn to move (CPU).\n";
     cout << "Calculating move...\n\n";
-    
-    int depth = 7;
-    Move move = minimax(board, player, depth);
+
+    bool cut = 0;
+    int inf = -9999, sup = 9999;
+    Move move = minimax(board, player, 11, 1, inf, sup, cut);
     move.setPlayer(player);
     char bestrow = move.row()+'A';
     char bestcol = move.col()+'1';
@@ -424,53 +430,77 @@ void setBoardState(Piece copy[8][8], Piece paste[8][8])
 }
 
 
-Move minimax(Piece board[8][8], char player, int depth, bool maximise, int inf, int sup)
+Move minimax(Piece board[8][8], char player, int depth,
+	     bool maximise, int inf, int sup, bool &cut)
 {
-    Move best_move, move;
-    best_move.setScore(-999);
-    Piece state[8][8];
-    setBoardState(board, state);
+    //printBoard(board);
+    Move best_move;
 
     if (depth  == 0) {
-	best_move.setScore(calculateScore(board, player));
+	best_move.setScore(calculateScore(board, opponent(player)));
 	return best_move;
     }
     
-    for (int rows=0; rows<8; rows++) {
-	for (int cols=0; cols<8; cols++) {
-	    move.setLocation(rows, cols);
-	    move.setPlayer(player);
-	    if (checkLegalMove(board, move)) {
-
-		transformBoard(board, move);
-		if (maximise) {
-		    move = minimax(board, opponent(player), depth-1, 0, inf, sup);
-		    if (move.score() > best_move.score()) {
-			best_move.setScore(move.score());
-			best_move.setLocation(move.row(), move.col());
-		    }
+    Piece state[8][8];
+    setBoardState(board, state);
+    		
+    if (maximise) {
+	best_move.setScore(-9999);
+		    
+	for (int rows=0; rows<8; rows++) {
+	    if (cut) { cut = 0;	break; }
+	    for (int cols=0; cols<8; cols++) {
+		if (cut) break; 
+		
+		Move move;
+		move.setVar(0, player, rows, cols);
+		if (checkLegalMove(board, move)) {
+		    
+		    transformBoard(board, move);	    
+		    move = minimax(board, opponent(player), depth-1, 0, inf, sup, cut);
+		    if (move.score() > best_move.score())
+			best_move.setVar(move.score(), player, rows, cols);
 		    if (best_move.score() > inf)
 			inf = best_move.score();
-		    if (inf >= sup)
-			breakFlag = 1;
-		    return best_move;
-		} else {
-		    move = minimax(board, opponent(player), depth-1, 1, inf, sup);
-		    if (move.score() > best_move.score()) {
-			best_move.setScore(move.score());
-			best_move.setLocation(move.row(), move.col());
-		    }
-		    if (best_move.score() < sup)
-			sup = best_move.score();
-		    if (inf >= sup)
-			breakFlag = 1;
-		    return best_move;
-		    
-			
+		    if (inf > sup)
+			cut = 1;
+		    setBoardState(state, board);
+
+		}
+		
 	    }
 	}
+	return best_move;
+		    
+    } else {
+	best_move.setScore(9999);
+
+	for (int rows=0; rows<8; rows++) {
+	    if (cut) { cut = 0;	break; }
+	    for (int cols=0; cols<8; cols++) {
+		if (cut) break;
+		
+		Move move;
+		move.setVar(0, player, rows, cols);
+		if (checkLegalMove(board, move)) {
+		    
+		    transformBoard(board, move);		    
+		    move = minimax(board, opponent(player), depth-1, 1, inf, sup, cut);
+		    if (move.score() < best_move.score())
+			best_move.setVar(move.score(), player, rows, cols);
+		    if (best_move.score() < sup)
+			sup = best_move.score();
+		    if (inf > sup)
+			cut = 1;
+		    setBoardState(state, board);
+		    
+		}
+		
+	    }
+	}
+	return best_move;
+
     }
-    return best_move;
 }
 
 
