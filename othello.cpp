@@ -253,7 +253,7 @@ void cpuMove(Piece board[8][8], char &player)
 
     bool cut = 0;
     int inf = -9999, sup = 9999;
-    Move move = minimax(board, player, 11, 1, inf, sup, cut);
+    Move move = minimax(board, player, 7, 1, inf, sup, cut);
     move.setPlayer(player);
     char bestrow = move.row()+'A';
     char bestcol = move.col()+'1';
@@ -433,7 +433,6 @@ void setBoardState(Piece copy[8][8], Piece paste[8][8])
 Move minimax(Piece board[8][8], char player, int depth,
 	     bool maximise, int inf, int sup, bool &cut)
 {
-    //printBoard(board);
     Move best_move;
 
     if (depth  == 0) {
@@ -462,7 +461,7 @@ Move minimax(Piece board[8][8], char player, int depth,
 			best_move.setVar(move.score(), player, rows, cols);
 		    if (best_move.score() > inf)
 			inf = best_move.score();
-		    if (inf > sup)
+		    if (inf >= sup)
 			cut = 1;
 		    setBoardState(state, board);
 
@@ -490,7 +489,7 @@ Move minimax(Piece board[8][8], char player, int depth,
 			best_move.setVar(move.score(), player, rows, cols);
 		    if (best_move.score() < sup)
 			sup = best_move.score();
-		    if (inf > sup)
+		    if (inf >= sup)
 			cut = 1;
 		    setBoardState(state, board);
 		    
@@ -507,32 +506,56 @@ Move minimax(Piece board[8][8], char player, int depth,
 int calculateScore(const Piece board[8][8], char player)
 {
     int counter=0;
+
+    char winner = checkWinner(board, player);
+    if (winner == player)
+	return 9999;
+    else if (winner == opponent(player))
+	return -9999;
     
     for (int rows=1; rows<7; rows++) {
 	for (int cols=1; cols<7; cols++) {
 	    if (board[rows][cols].colour() == player)
 		counter++;
+	    else if (board[rows][cols].colour() == opponent(player))
+		counter--;
 	}
     }
 
     if (board[0][0].colour() == player)
-	counter += 50;
+	counter += 28;
+    else if (board[0][0].colour() == opponent(player))
+	counter -= 28;
     if (board[7][7].colour() == player)
-	counter += 50;
+	counter += 28;
+    else if (board[7][7].colour() == opponent(player))
+	counter -= 28;
     if (board[0][7].colour() == player)
-	counter += 50;
+	counter += 28;
+    else if (board[0][7].colour() == opponent(player))
+	counter -= 28;
     if (board[7][0].colour() == player)
-	counter += 50;
+	counter += 28;
+    else if (board[7][0].colour() == opponent(player))
+	counter -= 28;
 
     for (int i=1; i<7; i++) {
 	if (board[0][i].colour() == player)
-	    counter += 7;
+	    counter += 4;
+	else if (board[0][i].colour() == opponent(player))
+	    counter -= 4;
 	if (board[7][i].colour() == player)
-	    counter += 7;
+	    counter += 4;
+	else if (board[7][i].colour() == opponent(player))
+	    counter -= 4;
 	if (board[i][0].colour() == player)
-	    counter += 7;
+	    counter += 4;
+	else if (board[i][0].colour() == opponent(player))
+	    counter -= 4;
 	if (board[i][7].colour() == player)
-	    counter += 7;
+	    counter += 4;
+	else if (board[i][7].colour() == opponent(player))
+	    counter -= 4;
     }
     
     return counter;
