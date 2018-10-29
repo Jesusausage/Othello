@@ -424,7 +424,7 @@ void setBoardState(Piece copy[8][8], Piece paste[8][8])
 }
 
 
-Move minimax(Piece board[8][8], char player, int depth)
+Move minimax(Piece board[8][8], char player, int depth, bool maximise, int inf, int sup)
 {
     Move best_move, move;
     best_move.setScore(-999);
@@ -442,20 +442,34 @@ Move minimax(Piece board[8][8], char player, int depth)
 	    move.setPlayer(player);
 	    if (checkLegalMove(board, move)) {
 
-		transformBoard(board, move);		
-		Move best_resp = minimax(board, opponent(player), depth-1);
-		
-		int score = -1 * best_resp.score();
-		if (score > best_move.score()) {
-		    best_move.setLocation(rows, cols);
-		    best_move.setScore(score);
-		}		
-		setBoardState(state, board);
-		
+		transformBoard(board, move);
+		if (maximise) {
+		    move = minimax(board, opponent(player), depth-1, 0, inf, sup);
+		    if (move.score() > best_move.score()) {
+			best_move.setScore(move.score());
+			best_move.setLocation(move.row(), move.col());
+		    }
+		    if (best_move.score() > inf)
+			inf = best_move.score();
+		    if (inf >= sup)
+			breakFlag = 1;
+		    return best_move;
+		} else {
+		    move = minimax(board, opponent(player), depth-1, 1, inf, sup);
+		    if (move.score() > best_move.score()) {
+			best_move.setScore(move.score());
+			best_move.setLocation(move.row(), move.col());
+		    }
+		    if (best_move.score() < sup)
+			sup = best_move.score();
+		    if (inf >= sup)
+			breakFlag = 1;
+		    return best_move;
+		    
+			
 	    }
 	}
     }
-
     return best_move;
 }
 
