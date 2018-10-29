@@ -76,13 +76,17 @@ char checkWinner(const Piece board[8][8], char player);
 /* Count piece differential. */
 int countDiff(const Piece board[8][8], char player);
 
+/* Makes a copy of the board state that can be reloaded. */
 void setBoardState(Piece copy[8][8], Piece paste[8][8]);
 
+/* Execute the minimax algorithm with alpha-beta pruning. */
 Move minimax(Piece board[8][8], char player, int depth,
 	     bool maximise, int inf, int sup, bool &cut);
 
+/* CPU makes a move. */
 void cpuMove(Piece board[8][8], char &player);
 
+/* Calculate weighted piece difference. */
 int calculateScore(const Piece board[8][8], char player);
 
 
@@ -252,9 +256,8 @@ void cpuMove(Piece board[8][8], char &player)
     cout << "Calculating move...\n\n";
 
     bool cut = 0;
-    int inf = -9999, sup = 9999;
-    Move move = minimax(board, player, 7, 1, inf, sup, cut);
-    move.setPlayer(player);
+    Move move = minimax(board, player, 11, 1, -9999, 9999, cut);
+    
     char bestrow = move.row()+'A';
     char bestcol = move.col()+'1';
     cout << "CPU chooses " << bestrow << bestcol << ".\n";
@@ -439,6 +442,7 @@ Move minimax(Piece board[8][8], char player, int depth,
 	best_move.setScore(calculateScore(board, opponent(player)));
 	return best_move;
     }
+    /* Termination condition. */
     
     Piece state[8][8];
     setBoardState(board, state);
@@ -512,6 +516,7 @@ int calculateScore(const Piece board[8][8], char player)
 	return 9999;
     else if (winner == opponent(player))
 	return -9999;
+    /* Winning or losing is automatically highest/lowest score. */
     
     for (int rows=1; rows<7; rows++) {
 	for (int cols=1; cols<7; cols++) {
@@ -523,40 +528,42 @@ int calculateScore(const Piece board[8][8], char player)
     }
 
     if (board[0][0].colour() == player)
-	counter += 28;
+	counter += 10;
     else if (board[0][0].colour() == opponent(player))
-	counter -= 28;
+	counter -= 10;
     if (board[7][7].colour() == player)
-	counter += 28;
+	counter += 10;
     else if (board[7][7].colour() == opponent(player))
-	counter -= 28;
+	counter -= 10;
     if (board[0][7].colour() == player)
-	counter += 28;
+	counter += 10;
     else if (board[0][7].colour() == opponent(player))
-	counter -= 28;
+	counter -= 10;
     if (board[7][0].colour() == player)
-	counter += 28;
+	counter += 10;
     else if (board[7][0].colour() == opponent(player))
-	counter -= 28;
+	counter -= 10;
+    /* Corner pieces are weighted dectuple. */
 
     for (int i=1; i<7; i++) {
 	if (board[0][i].colour() == player)
-	    counter += 4;
+	    counter += 3;
 	else if (board[0][i].colour() == opponent(player))
-	    counter -= 4;
+	    counter -= 3;
 	if (board[7][i].colour() == player)
-	    counter += 4;
+	    counter += 3;
 	else if (board[7][i].colour() == opponent(player))
-	    counter -= 4;
+	    counter -= 3;
 	if (board[i][0].colour() == player)
-	    counter += 4;
+	    counter += 3;
 	else if (board[i][0].colour() == opponent(player))
-	    counter -= 4;
+	    counter -= 3;
 	if (board[i][7].colour() == player)
-	    counter += 4;
+	    counter += 3;
 	else if (board[i][7].colour() == opponent(player))
-	    counter -= 4;
+	    counter -= 3;
     }
+    /* Edge piece are weighted triple. */
     
     return counter;
 }
